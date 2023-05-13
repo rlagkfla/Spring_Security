@@ -2,8 +2,13 @@ package com.study.login2.config;
 
 import com.study.login2.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.security.ConditionalOnDefaultWebSecurity;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -14,8 +19,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity // Security 사용
 @RequiredArgsConstructor
 @Configuration
+//@ConditionalOnDefaultWebSecurity
+//@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class WebSecurityConfig {
-
     private final UserService userService;
 
     @Bean
@@ -27,10 +33,14 @@ public class WebSecurityConfig {
 
 
     @Bean
+//    @Order(SecurityProperties.BASIC_AUTH_ORDER)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{ // http 관련 인증 설정
 
-        http.csrf().disable()
-                .authorizeHttpRequests() // 접근에 대한 인증 설정
+        // 사이트 위변조 요청 방지
+        http.csrf().disable();
+
+        //http.authorizeHttpRequests().antMatchers
+        http.authorizeHttpRequests() // 접근에 대한 인증 설정
                 .requestMatchers("/login","/signup","/user").permitAll() // 누구나 접근 허용
                 .requestMatchers("/").hasRole("USER") // USER, ADMIN만 접근 가능
                 .requestMatchers("/admin").hasRole("ADMIN") // ADMIN만 접근 가능
@@ -38,11 +48,21 @@ public class WebSecurityConfig {
                 .and()
                 .formLogin()
                     .loginPage("/login") // 로그인 페이지 링크
-                    .defaultSuccessUrl("/") // 로그인 성공 후 리다이렉트 주소
+                    .defaultSuccessUrl("/") // 로그인 성공 후 리다이렉트 주소 -> main.html
+                    .permitAll()
                 .and()
                 .logout()
                     .logoutSuccessUrl("/login") // 로그아웃 성공시 리다이렉트 주소
                     .invalidateHttpSession(true); // 세션 날리기
+
+
+//        http.formLogin()
+//                .loginPage("/login")
+//                .defaultSuccessUrl("/")
+//            .and().logout()
+//                .logoutSuccessUrl("/login")
+//                .invalidateHttpSession(true);
+
 
         return http.build();
 
